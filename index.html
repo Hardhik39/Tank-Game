@@ -1,0 +1,195 @@
+<html>
+    <canvas id="tank" width="1500" height="900"></canvas>
+    <script src="game.js"></script>
+    <script src="circle_bullet.js"></script>
+    <script src ="enemy.js"></script>
+    <script src="demo.js"></script>
+    <script>
+        var g_canvas=document.getElementById("tank");
+        var g_context=g_canvas.getContext("2d");
+        var FrameRate=30;
+        var TimeInterval=1000/FrameRate;
+        var g_MoveLeft  = 0;
+        var g_MoveRight = 0;
+        var g_Start_Time_Flag=0;
+        var g_Score=0;
+        var g_Game_End_Text_Flag=0;
+        var framecount=0;
+        var g_Start_Time=4;
+        var a = setInterval(f_Gameloop,TimeInterval);
+        var tank= new c_TANK(10,700);
+        var Enemy=new c_Enemy(1500,800);
+        var innerCircle= new c_bullet();
+        innerCircle.radius=5;
+        
+        function f_Gameloop()
+        {
+            f_Game_Start_Logic();
+            tank.m_rotateTurret(g_canvas);
+            tank.m_Shoot();
+            tank.bullet.m_movement();
+            tank.bullet.m_Border_collision(g_canvas);
+            if(g_Start_Time<=0)
+                {
+                    Enemy.m_Enemy_movement();
+                }
+            
+            
+            f_bullet_enemy_collison();
+            f_tank_and_enemycollision();
+			
+          f_clearcanvas();
+			
+            tank.m_drawTank(g_context);
+			
+            tank.bullet.m_draw_bullet(g_context);
+			
+            Enemy.m_draw_enemy(g_context);
+            if(g_Start_Time_Flag==1)
+                  {
+                      f_Start_Time_Draw();
+                      if(g_Start_Time==0)
+                      {    
+                      g_Start_Time_Flag=0;
+                      }
+                  }
+            if(g_Game_End_Text_Flag==1)
+               {
+                    f_Game_End_Draw();
+                    
+               }
+            f_Score_Draw();
+            
+           
+        }
+        
+        
+        function f_Game_Start_Logic() //logic for game sarting time
+        {
+            framecount++;
+            if(framecount==30 && g_Start_Time>0)
+                {
+                   g_Start_Time_Flag=1;
+                    g_Start_Time--;
+                    
+                    framecount=0;
+                }
+              
+            
+        }
+        
+        function f_Start_Time_Draw()//game sart time before time begins
+        {
+            g_context.font="100px Arial";
+            g_context.fillText(g_Start_Time,750,250);
+			g_context.font="30px Arial";
+			g_context.fillStyle="#000000"
+			g_context.fillText("PRESS 'A' TO MOVE LEFT",30,270);
+			g_context.fillText("PRESS 'D' TO MOVE RIGHT",30,320);
+			g_context.fillText("PRESS 'SPACE BAR' TO SHOOT",1000,270);
+        }
+      
+       
+        function f_Game_End_Draw() //this happens when enemy touches tank
+        {
+            g_context.font="100px Arial";
+            g_context.fillText("GAME OVER",450,200);
+            
+        }
+      
+        function f_Score_Draw() //how many point you scored
+        {
+            g_context.font="50px Arial";
+            g_context.fillText(g_Score,750,100);
+            
+        }
+        function f_bullet_enemy_collison()//when bullet touches enemy
+        {
+            var g_Rightsquarex= Enemy.Enemy_x+Enemy.Enemy_width;
+      
+            var g_bottomSquarey= Enemy.Enemy_y+Enemy.Enemy_height;
+            
+            innerCircle.x=Math.max(Enemy.Enemy_x,Math.min(tank.bullet.xpos,g_Rightsquarex));
+            innerCircle.y=Math.max(Enemy.Enemy_y,Math.min(tank.bullet.ypos,g_bottomSquarey));
+            
+            //distance between circle coordinate and point coordinate
+            
+           var distance=Math.sqrt(((tank.bullet.xpos-innerCircle.x)*(tank.bullet.xpos-innerCircle.x))+((tank.bullet.ypos-innerCircle.y)*(tank.bullet.ypos-innerCircle.y)));
+            if(distance<=tank.bullet.radius)
+                {
+                    g_Score++;
+                    Enemy.Enemy_x=1400;
+                    Enemy.Enemy_y=800;
+                    Enemy.Movementspeed++;
+                    tank.bullet.xpos=tank.centerX;
+                    tank.bullet.ypos=tank.centerY;
+                    tank.bullet.initial_velocity=30;
+                    tank.bullet.acceleration=-1;
+                    tank.bullet.Start_animat_flag=0;
+                    tank.bullet.ySpeed=tank.bullet.initial_velocity;
+                    tank.bullet.xSpeed=20;
+                    tank.bullet.dX = 0;
+                    tank.bullet.launchAngle=0;
+                }
+            
+        }
+        function f_tank_and_enemycollision()//when enemy touches tank
+        {
+            if(tank.X <= (Enemy.Enemy_x+Enemy.Enemy_width) && (tank.X+tank.width) >= Enemy.Enemy_x && tank.Y <=(Enemy.Enemy_y+Enemy.Enemy_height) && (tank.Y+tank.height) >= Enemy.Enemy_y)
+                {
+                    
+                clearTimeout(a);
+                g_Game_End_Text_Flag=1;
+                
+                    
+                }
+        }
+        
+        function f_clearcanvas()
+        {
+            g_context.clearRect(0,0,g_canvas.width,g_canvas.height);
+            g_context.strokeRect(0,0,g_canvas.width,g_canvas.height);
+			g_context.fillStyle="#99d5fa";
+			g_context.fillRect(0,0,g_canvas.width,g_canvas.height);
+        }
+		
+       
+      
+        //buttons code
+         function f_OnKeyDown(l_event)
+        {
+            if(g_Start_Time<=0)
+               {
+                if(l_event.keyCode == 65)
+                   {
+                        tank.MoveLeftflag=1
+                   }
+                if(l_event.keyCode == 68)
+                   {
+                        tank.MoveRightflag=1
+                   }
+                 if(l_event.keyCode==32)
+                {
+                    tank.bullet.Start_animat_flag=1;
+                }
+            }
+        }
+    
+    function f_OnKeyUp(l_event)
+    {
+        if(g_Start_Time<=0)
+               {
+                 if(l_event.keyCode == 65)
+                   {
+                        tank.MoveLeftflag=0;
+                   }
+                if(l_event.keyCode == 68)
+                   {
+                        tank.MoveRightflag=0;
+                   }
+               }
+    }
+    
+    window.addEventListener("keydown",f_OnKeyDown);
+    window.addEventListener("keyup",f_OnKeyUp);
+    </script></html>
